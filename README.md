@@ -8,3 +8,15 @@ This image is a runtime image for hosting PHP workloads on a virtual machine in 
 1. Install Docker on the target machine
 1. Setup Nginx as a reverse proxy, Let's Encrypt, virtual hosts etc.
 1. Execute following command: `docker run ...` 
+
+## Volume Mounting
+In order to be able to use persistent data, use of volume mounting is expected. The data should be mounted in _/home/_ directory.
+
+The folder structure should be following:
+
+```
+/home/ - Mounted root
+/home/LogFiles/ - Folder with all logs
+/home/site/ - Website related files, can contain php.ini and such
+/home/site/wwwroot - Application root which Apache points to
+```
