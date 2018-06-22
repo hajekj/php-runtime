@@ -24,7 +24,18 @@ The real storage is likely to be `/var/hosting/storage/<container_name>` on the 
 ## Server Setup
 1. [Install Nginx + Let's Encrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-16-04)
 1. [Install Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
-### MySQL
+
+### Hosting Setup
+#### Network
+[More info](https://docs.docker.com/network/bridge/#connect-a-container-to-a-user-defined-bridge) on networking in Docker.
 ```
-docker run --name mysql-1 -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
+docker network create network-1
+```
+Add existing resource network:
+```
+docker network connect network-1 mysql-1
+```
+#### MySQL
+```
+docker run --name mysql-1 --network network-1 --publish 3306:3306 -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
 ```
