@@ -2,7 +2,7 @@
 Custom PHP runtime image used on my personal server.
 
 ## Introduction
-This image is a runtime image for hosting PHP workloads on a virtual machine in Docker. This image is likely to be accompanied with a MySQL container. The major point of this image is to replicate [WEDOS](https://wedos.cz) hosting setup, where multiple sites are hosted within the same image.
+This image is a runtime image for hosting PHP workloads on a virtual machine in Docker. This image is likely to be accompanied with a MySQL container. The major point of this image is to replicate [WEDOS](https://wedos.cz) hosting setup, where multiple sites are hosted within the same image while persisting the feel of Azure's App Service on Linux.
 
 ## Installation
 1. Install Docker on the target machine
