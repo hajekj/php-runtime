@@ -13,10 +13,10 @@ This image is a runtime image for hosting PHP workloads on a virtual machine in 
 In order to be able to use persistent data, use of volume mounting is expected. The data should be mounted in _/home/_ directory.
 
 The folder structure should be following:
-
 ```
 /home/ - Mounted root
 /home/LogFiles/ - Folder with all logs
 /home/site/ - Website related files, can contain php.ini and such
 /home/site/wwwroot - Application root which Apache points to
 ```
+The real storage is likely to be `/var/www/<container_name>` on the underlying instance.
