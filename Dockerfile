@@ -3,6 +3,9 @@ MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
 RUN a2enmod rewrite expires include deflate
 
+COPY apache2.conf /bin/
+COPY init_container.sh /bin/
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          libpng-dev \
