@@ -19,4 +19,12 @@ The folder structure should be following:
 /home/site/ - Website related files, can contain php.ini and such
 /home/site/wwwroot - Application root which Apache points to
 ```
-The real storage is likely to be `/var/www/<container_name>` on the underlying instance.
+The real storage is likely to be `/var/hosting/storage/<container_name>` on the underlying instance.
+
+## Server Setup
+1. [Install Nginx + Let's Encrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-16-04)
+1. [Install Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+### MySQL
+```
+docker run --name mysql-1 -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
+```
