@@ -7,7 +7,7 @@ This image is a runtime image for hosting PHP workloads on a virtual machine in 
 ## Installation
 1. Install Docker on the target machine
 1. Setup Nginx as a reverse proxy, Let's Encrypt, virtual hosts etc.
-1. Execute following command: `docker run ...` 
+1. Execute following command: `docker run ...` (see below)
 
 ## Volume Mounting
 In order to be able to use persistent data, use of volume mounting is expected. The data should be mounted in _/home/_ directory.
@@ -38,4 +38,12 @@ docker network connect network-1 mysql-1
 #### MySQL
 ```
 docker run --name mysql-1 --network network-1 --publish 3306:3306 -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
+```
+#### PHP
+```
+docker run --name php-1 --network network-1 --publish 62001:8080 -v /var/hosting/storage/1:/home -d hajekj/hajekjnet-php:latest
+```
+#### Nginx Virtual Host
+```
+
 ```
