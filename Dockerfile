@@ -56,7 +56,6 @@ RUN \
    && make \
    && make install \
    && echo "LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so" >> /etc/apache2/mods-enabled/rpaf.load \
-   && rm /etc/apache2/mods-available/rpaf.conf \
    && cp /bin/rpaf.conf /etc/apache2/mods-enabled/rpaf.conf
 
 RUN   \
