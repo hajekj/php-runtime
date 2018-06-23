@@ -60,3 +60,5 @@ server {
         }
 }
 ```
+#### Azure specific
+* [Add swap to /mnt/](https://support.microsoft.com/en-us/help/4010058/how-to-add-a-swap-file-in-linux-azure-virtual-machines)
