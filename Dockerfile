@@ -17,7 +17,6 @@ RUN apt-get update \
          libgmp-dev \
          libmagickwand-dev \
          openssh-server vim curl wget tcptraceroute \
-         libapache2-mod-rpaf \
     && chmod 755 /bin/init_container.sh \
     && echo "cd /home" >> /etc/bash.bashrc \
     && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
@@ -44,8 +43,14 @@ RUN apt-get update \
     && docker-php-ext-enable imagick \
     && docker-php-ext-enable mcrypt
 
-
-RUN a2enmod rewrite expires include deflate rpaf
+# Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
+RUN \
+   apt-get install unzip build-essential apache2-dev \
+   && wget https://github.com/gnif/mod_rpaf/archive/stable.zip \
+   && unzip stable.zip \
+   && cd mod_rpaf-stable \
+   && make \
+   && sudo make install
 
 RUN   \
    rm -f /var/log/apache2/* \
@@ -57,12 +62,15 @@ RUN   \
    && chmod 777 /var/lock \
    && chmod 777 /bin/init_container.sh \
    && cp /bin/apache2.conf /etc/apache2/apache2.conf \
-   && cp /bin/rpaf.conf /etc/apache2/mods-enabled/rpaf.conf \
+   && rm /etc/apache2/mods-available/rpaf.conf \
+   && cp /bin/rpaf.conf /etc/apache2/mods-available/rpaf.conf \
    && rm -rf /var/www/html \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
    && ln -s /home/site/wwwroot /var/www/html \
    && ln -s /home/LogFiles /var/log/apache2 
+
+RUN a2enmod rewrite expires include deflate rpaf
 
 RUN { \
                 echo 'opcache.memory_consumption=128'; \
