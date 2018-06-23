@@ -54,6 +54,8 @@ RUN \
    && make \
    && make install
 
+RUN a2enmod rewrite expires include deflate rpaf
+
 RUN   \
    rm -f /var/log/apache2/* \
    && rmdir /var/lock/apache2 \
@@ -71,8 +73,6 @@ RUN   \
    && mkdir -p /home/LogFiles \
    && ln -s /home/site/wwwroot /var/www/html \
    && ln -s /home/LogFiles /var/log/apache2 
-
-RUN a2enmod rewrite expires include deflate rpaf
 
 RUN { \
                 echo 'opcache.memory_consumption=128'; \
