@@ -52,7 +52,7 @@ RUN \
    && unzip stable.zip \
    && cd mod_rpaf-stable \
    && make \
-   && sudo make install
+   && make install
 
 RUN   \
    rm -f /var/log/apache2/* \
