@@ -1,9 +1,8 @@
 FROM php:7.2.5-apache
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
-RUN a2enmod rewrite expires include deflate
-
 COPY apache2.conf /bin/
+COPY rpaf.conf /etc/apache2/mods-enabled/
 COPY init_container.sh /bin/
 
 RUN apt-get update \
@@ -18,6 +17,7 @@ RUN apt-get update \
          libgmp-dev \
          libmagickwand-dev \
          openssh-server vim curl wget tcptraceroute \
+         libapache2-mod-rpaf \
     && chmod 755 /bin/init_container.sh \
     && echo "cd /home" >> /etc/bash.bashrc \
     && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
@@ -43,6 +43,9 @@ RUN apt-get update \
          pcntl \
     && docker-php-ext-enable imagick \
     && docker-php-ext-enable mcrypt
+
+
+RUN a2enmod rewrite expires include deflate rpaf
 
 RUN   \
    rm -f /var/log/apache2/* \
