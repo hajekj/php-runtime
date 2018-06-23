@@ -55,7 +55,9 @@ RUN \
    && cd mod_rpaf-stable \
    && make \
    && make install \
-   && echo "LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so" >> /etc/apache2/mods-available/rpaf.conf
+   && echo "LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so" >> /etc/apache2/mods-enabled/rpaf.load \
+   && rm /etc/apache2/mods-available/rpaf.conf \
+   && cp /bin/rpaf.conf /etc/apache2/mods-enabled/rpaf.conf
 
 RUN   \
    rm -f /var/log/apache2/* \
@@ -67,8 +69,6 @@ RUN   \
    && chmod 777 /var/lock \
    && chmod 777 /bin/init_container.sh \
    && cp /bin/apache2.conf /etc/apache2/apache2.conf \
-   && rm /etc/apache2/mods-available/rpaf.conf \
-   && cp /bin/rpaf.conf /etc/apache2/mods-available/rpaf.conf \
    && rm -rf /var/www/html \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
