@@ -46,7 +46,7 @@ RUN apt-get update \
 # Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
 RUN \
    apt-get update \
-   && install unzip build-essential apache2-dev \
+   && apt-get install unzip build-essential apache2-dev \
    && wget https://github.com/gnif/mod_rpaf/archive/stable.zip \
    && unzip stable.zip \
    && cd mod_rpaf-stable \
