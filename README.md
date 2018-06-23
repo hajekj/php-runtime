@@ -46,18 +46,23 @@ docker run --name php-1 --network network-1 --publish 62001:8080 --restart unles
 #### Nginx Virtual Host
 ```
 server {
-        listen 80;
+    listen 80;
 
-        server_name vps.hajekj.net;
+    server_name vps.hajekj.net;
 
-        location / {
-                proxy_pass         http://localhost:62001;
-                proxy_redirect     off;
-                proxy_set_header   Host $host;
-                proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header   X-Forwarded-Host $server_name;
-                proxy_set_header   X-Forwarded-Proto $scheme;
-        }
+    location / {
+        proxy_pass         http://localhost:62001;
+        proxy_redirect     off;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Host $host;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        
+        # Optional: Disable output buffering
+        #client_max_body_size 0;
+        #proxy_http_version 1.1;
+        #proxy_request_buffering off;
+    }
 }
 ```
 #### Azure specific
