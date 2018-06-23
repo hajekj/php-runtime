@@ -5,6 +5,8 @@ COPY apache2.conf /bin/
 COPY rpaf.conf /bin/
 COPY init_container.sh /bin/
 
+RUN a2enmod rewrite expires include deflate
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          libpng-dev \
@@ -52,9 +54,8 @@ RUN \
    && unzip stable.zip \
    && cd mod_rpaf-stable \
    && make \
-   && make install
-
-RUN a2enmod rewrite expires include deflate rpaf
+   && make install \
+   && echo "LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so" >> /etc/apache2/mods-available/rpaf.conf
 
 RUN   \
    rm -f /var/log/apache2/* \
