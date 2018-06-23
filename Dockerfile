@@ -2,7 +2,7 @@ FROM php:7.2.5-apache
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
 COPY apache2.conf /bin/
-COPY rpaf.conf /etc/apache2/mods-enabled/
+COPY rpaf.conf /bin/
 COPY init_container.sh /bin/
 
 RUN apt-get update \
@@ -57,6 +57,7 @@ RUN   \
    && chmod 777 /var/lock \
    && chmod 777 /bin/init_container.sh \
    && cp /bin/apache2.conf /etc/apache2/apache2.conf \
+   && cp /bin/rpaf.conf /etc/apache2/mods-enabled/rpaf.conf \
    && rm -rf /var/www/html \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
