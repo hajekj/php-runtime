@@ -37,11 +37,11 @@ docker network connect network-1 mysql-1
 ```
 #### MySQL
 ```
-docker run --name mysql-1 --network network-1 --publish 3306:3306 -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
+docker run --name mysql-1 --network network-1 --restart unless-stopped --memory=256M -v /var/hosting/mysql/1:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.7
 ```
 #### PHP
 ```
-docker run --name php-1 --network network-1 --publish 62001:8080 -v /var/hosting/storage/1:/home -d hajekj/hajekjnet-php:latest
+docker run --name php-1 --network network-1 --publish 62001:8080 --restart unless-stopped -v /var/hosting/storage/1:/home -d hajekj/hajekjnet-php:latest
 ```
 #### Nginx Virtual Host
 ```
@@ -54,7 +54,6 @@ server {
                 proxy_pass         http://localhost:62001;
                 proxy_redirect     off;
                 proxy_set_header   Host $host;
-                proxy_set_header   X-Real-IP $remote_addr;
                 proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header   X-Forwarded-Host $server_name;
                 proxy_set_header   X-Forwarded-Proto $scheme;
