@@ -1,6 +1,51 @@
 FROM php:7.2.5-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
+# Copy image files
+COPY apache2.conf /bin/
+COPY rpaf.conf /bin/
+COPY init_container.sh /bin/
+COPY www.conf /bin/
+
+# Configure PHP and required extensions
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+         libpng-dev \
+         libjpeg-dev \
+         libpq-dev \
+         libmcrypt-dev \
+         libldap2-dev \
+         libldb-dev \
+         libicu-dev \
+         libgmp-dev \
+         libmagickwand-dev \
+         openssh-server vim curl wget tcptraceroute \
+    && chmod 755 /bin/init_container.sh \
+    && echo "cd /home" >> /etc/bash.bashrc \
+    && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
+    && ln -s /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so \
+    && ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h \
+    && rm -rf /var/lib/apt/lists/* \
+    && pecl install imagick-beta \
+    && pecl install mcrypt-1.0.1 \
+    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+    && docker-php-ext-install gd \
+         mysqli \
+         opcache \
+         pdo \
+         pdo_mysql \
+         pdo_pgsql \
+         pgsql \
+         ldap \
+         intl \
+         gmp \
+         zip \
+         bcmath \
+         mbstring \
+         pcntl \
+    && docker-php-ext-enable imagick \
+    && docker-php-ext-enable mcrypt
+
 # Install and configure Apache
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
@@ -40,51 +85,7 @@ RUN set -ex \
 	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/access.log" \
 	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/other_vhosts_access.log"
 
-# Configure PHP and the rest of the image
-COPY apache2.conf /bin/
-COPY rpaf.conf /bin/
-COPY init_container.sh /bin/
-COPY www.conf /bin/
-
-RUN a2enmod rewrite expires include deflate
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-         libpng-dev \
-         libjpeg-dev \
-         libpq-dev \
-         libmcrypt-dev \
-         libldap2-dev \
-         libldb-dev \
-         libicu-dev \
-         libgmp-dev \
-         libmagickwand-dev \
-         openssh-server vim curl wget tcptraceroute \
-    && chmod 755 /bin/init_container.sh \
-    && echo "cd /home" >> /etc/bash.bashrc \
-    && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
-    && ln -s /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so \
-    && ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h \
-    && rm -rf /var/lib/apt/lists/* \
-    && pecl install imagick-beta \
-    && pecl install mcrypt-1.0.1 \
-    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
-    && docker-php-ext-install gd \
-         mysqli \
-         opcache \
-         pdo \
-         pdo_mysql \
-         pdo_pgsql \
-         pgsql \
-         ldap \
-         intl \
-         gmp \
-         zip \
-         bcmath \
-         mbstring \
-         pcntl \
-    && docker-php-ext-enable imagick \
-    && docker-php-ext-enable mcrypt
+RUN a2enmod rewrite expires include deflate proxy_fcgi
 
 # Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
 RUN \
