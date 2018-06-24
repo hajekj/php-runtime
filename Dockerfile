@@ -113,6 +113,7 @@ RUN   \
    && rm -rf /var/www/html \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
+   && mkdir -p /run/php \
    && ln -s /home/site/wwwroot /var/www/html \
    && ln -s /home/LogFiles /var/log/apache2 \
    && rm /usr/local/etc/php-fpm.d/www.conf \
