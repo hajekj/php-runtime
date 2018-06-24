@@ -1,9 +1,47 @@
-FROM php:7.2.5-apache
+FROM php:7.2.5-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
+# Install and configure Apache
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		apache2 \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN set -ex \
+	\
+# generically convert lines like
+#   export APACHE_RUN_USER=www-data
+# into
+#   : ${APACHE_RUN_USER:=www-data}
+#   export APACHE_RUN_USER
+# so that they can be overridden at runtime ("-e APACHE_RUN_USER=...")
+	&& sed -ri 's/^export ([^=]+)=(.*)$/: ${\1:=\2}\nexport \1/' "$APACHE_ENVVARS" \
+	\
+# setup directories and permissions
+	&& . "$APACHE_ENVVARS" \
+	&& for dir in \
+		"$APACHE_LOCK_DIR" \
+		"$APACHE_RUN_DIR" \
+		"$APACHE_LOG_DIR" \
+		/var/www/html \
+	; do \
+		rm -rvf "$dir" \
+		&& mkdir -p "$dir" \
+		&& chown -R "$APACHE_RUN_USER:$APACHE_RUN_GROUP" "$dir"; \
+	done
+
+# logs should go to stdout / stderr
+RUN set -ex \
+	&& . "$APACHE_ENVVARS" \
+	&& ln -sfT /dev/stderr "$APACHE_LOG_DIR/error.log" \
+	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/access.log" \
+	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/other_vhosts_access.log"
+
+# Configure PHP and the rest of the image
 COPY apache2.conf /bin/
 COPY rpaf.conf /bin/
 COPY init_container.sh /bin/
+COPY www.conf /bin/
 
 RUN a2enmod rewrite expires include deflate
 
@@ -72,7 +110,9 @@ RUN   \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
    && ln -s /home/site/wwwroot /var/www/html \
-   && ln -s /home/LogFiles /var/log/apache2 
+   && ln -s /home/LogFiles /var/log/apache2 \
+   && rm /usr/local/etc/php-fpm.d/www.conf \
+   && cp /bin/www.conf /usr/local/etc/php-fpm.d/www.conf;
 
 RUN { \
                 echo 'opcache.memory_consumption=64'; \
