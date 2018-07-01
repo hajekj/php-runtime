@@ -6,6 +6,13 @@ COPY apache2.conf /bin/
 COPY rpaf.conf /bin/
 COPY init_container.sh /bin/
 COPY www.conf /bin/
+COPY supervisord.conf /bin/
+
+RUN apt update \
+    && apt install -y supervisor \ 
+    && mkdir -p /var/log/supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && cp /bin/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Configure PHP and required extensions
 RUN apt-get update \
