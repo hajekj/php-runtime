@@ -9,10 +9,11 @@ COPY www.conf /bin/
 COPY supervisord.conf /bin/
 
 RUN apt update \
-    && apt install -y supervisor \ 
+    && apt install -y --no-install-recommends\
+        supervisor \ 
     && mkdir -p /var/log/supervisor \
     && rm -rf /var/lib/apt/lists/* \
-    && cp /bin/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+    && cp /bin/supervisord.conf /etc/supervisor/supervisord.conf
 
 # Configure PHP and required extensions
 RUN apt-get update \
