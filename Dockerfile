@@ -1,12 +1,21 @@
-FROM php:7.2.5-apache
+FROM php:7.2.5-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
+# Copy image files
 COPY apache2.conf /bin/
 COPY rpaf.conf /bin/
 COPY init_container.sh /bin/
+COPY www.conf /bin/
+COPY supervisord.conf /bin/
 
-RUN a2enmod rewrite expires include deflate
+RUN apt update \
+    && apt install -y --no-install-recommends\
+        supervisor \ 
+    && mkdir -p /var/log/supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && cp /bin/supervisord.conf /etc/supervisor/supervisord.conf
 
+# Configure PHP and required extensions
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          libpng-dev \
@@ -45,6 +54,47 @@ RUN apt-get update \
     && docker-php-ext-enable imagick \
     && docker-php-ext-enable mcrypt
 
+# Install and configure Apache
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		apache2 \
+	&& rm -rf /var/lib/apt/lists/*
+
+ENV APACHE_CONFDIR /etc/apache2
+ENV APACHE_ENVVARS $APACHE_CONFDIR/envvars
+
+RUN set -ex \
+	\
+# generically convert lines like
+#   export APACHE_RUN_USER=www-data
+# into
+#   : ${APACHE_RUN_USER:=www-data}
+#   export APACHE_RUN_USER
+# so that they can be overridden at runtime ("-e APACHE_RUN_USER=...")
+	&& sed -ri 's/^export ([^=]+)=(.*)$/: ${\1:=\2}\nexport \1/' "$APACHE_ENVVARS" \
+	\
+# setup directories and permissions
+	&& . "$APACHE_ENVVARS" \
+	&& for dir in \
+		"$APACHE_LOCK_DIR" \
+		"$APACHE_RUN_DIR" \
+		"$APACHE_LOG_DIR" \
+		/var/www/html \
+	; do \
+		rm -rvf "$dir" \
+		&& mkdir -p "$dir" \
+		&& chown -R "$APACHE_RUN_USER:$APACHE_RUN_GROUP" "$dir"; \
+	done
+
+# logs should go to stdout / stderr
+RUN set -ex \
+	&& . "$APACHE_ENVVARS" \
+	&& ln -sfT /dev/stderr "$APACHE_LOG_DIR/error.log" \
+	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/access.log" \
+	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/other_vhosts_access.log"
+
+RUN a2enmod rewrite expires include deflate proxy_fcgi
+
 # Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
 RUN \
    apt-get update \
@@ -71,8 +121,11 @@ RUN   \
    && rm -rf /var/www/html \
    && rm -rf /var/log/apache2 \
    && mkdir -p /home/LogFiles \
+   && mkdir -p /run/php \
    && ln -s /home/site/wwwroot /var/www/html \
-   && ln -s /home/LogFiles /var/log/apache2 
+   && ln -s /home/LogFiles /var/log/apache2 \
+   && rm /usr/local/etc/php-fpm.d/www.conf \
+   && cp /bin/www.conf /usr/local/etc/php-fpm.d/www.conf;
 
 RUN { \
                 echo 'opcache.memory_consumption=64'; \
