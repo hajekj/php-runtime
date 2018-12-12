@@ -1,4 +1,4 @@
-FROM php:7.2.5-fpm
+FROM php:7.3.0-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
 # Copy image files
