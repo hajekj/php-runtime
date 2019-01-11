@@ -27,6 +27,7 @@ RUN apt-get update \
          libicu-dev \
          libgmp-dev \
          libmagickwand-dev \
+	 libzip-dev \
          openssh-server vim curl wget tcptraceroute \
     && chmod 755 /bin/init_container.sh \
     && echo "cd /home" >> /etc/bash.bashrc \
