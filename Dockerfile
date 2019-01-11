@@ -1,4 +1,4 @@
-FROM php:7.3.0-fpm
+FROM php:7.3.1-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
 # Copy image files
@@ -35,7 +35,7 @@ RUN apt-get update \
     && ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h \
     && rm -rf /var/lib/apt/lists/* \
     && pecl install imagick-beta \
-    && pecl install mcrypt-1.0.1 \
+    && pecl install mcrypt-1.0.2 \
     && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
     && docker-php-ext-install gd \
          mysqli \
