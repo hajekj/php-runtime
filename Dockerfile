@@ -18,6 +18,7 @@ RUN apt update \
 # Configure PHP and required extensions
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+         libfreetype6-dev \
          libpng-dev \
          libjpeg-dev \
          libpq-dev \
@@ -37,7 +38,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && pecl install imagick-beta \
     && pecl install mcrypt-1.0.2 \
-    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+    && docker-php-ext-configure gd \
+         --with-png-dir=/usr \
+	 --with-jpeg-dir=/usr \
+	 --enable-gd-native-ttf \
+         --with-freetype-dir=/usr/include/freetype2 \
     && docker-php-ext-install gd \
          mysqli \
          opcache \
