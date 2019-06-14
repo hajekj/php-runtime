@@ -1,4 +1,4 @@
-FROM php:7.3.1-fpm
+FROM php:7.3.6-fpm
 MAINTAINER Jan Hajek <hajek.j@hotmail.com>
 
 # Copy image files
@@ -99,7 +99,7 @@ RUN set -ex \
 	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/access.log" \
 	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/other_vhosts_access.log"
 
-RUN a2enmod rewrite expires include deflate proxy_fcgi
+RUN a2enmod rewrite expires include deflate proxy_fcgi headers
 
 # Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
 RUN \
