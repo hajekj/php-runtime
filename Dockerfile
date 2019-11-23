@@ -29,6 +29,7 @@ RUN apt-get update \
          libgmp-dev \
          libmagickwand-dev \
 	 libzip-dev \
+	 libonig-dev \
          openssh-server vim curl wget tcptraceroute \
     && chmod 755 /bin/init_container.sh \
     && echo "cd /home" >> /etc/bash.bashrc \
@@ -153,6 +154,8 @@ RUN { \
 EXPOSE 8080
 
 ENV PORT 8080
+
+RUN rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
 
 WORKDIR /var/www/html
 
