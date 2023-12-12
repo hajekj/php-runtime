@@ -42,6 +42,8 @@ RUN mkdir -p /opt/startup \
 
 COPY startssh.sh /opt/startup
 RUN chmod +x /opt/startup/startssh.sh
+COPY startup.sh /opt/startup/
+RUN chmod +x /opt/startup/startup.sh
 
 ENV PORT 80
 ENV SSH_PORT 2222
@@ -88,7 +90,5 @@ RUN rm /etc/apache2/sites-enabled/000-default.conf
 COPY mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
 
 WORKDIR /home/site/wwwroot
-
-COPY /startup.sh /opt/startup/startup.sh
 
 ENTRYPOINT ["/bin/init_container.sh"]
