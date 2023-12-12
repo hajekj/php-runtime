@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ghcr.io/hajekj/php-runtime:8.1.${{GITHUB_RUN_NUMBER}}
+      run: docker build . --file Dockerfile --tag ghcr.io/hajekj/php-runtime:8.1.${{github.run_number}}
     - name: 'Login to GitHub Container Registry'
       uses: docker/login-action@v1
       with:
@@ -23,8 +23,8 @@ jobs:
         username: ${{github.actor}}
         password: ${{secrets.GITHUB_TOKEN}}
     - name: Push the Docker Image as Tagged
-      run: docker push ghcr.io/hajekj/php-runtime:8.1.${{GITHUB_RUN_NUMBER}}
+      run: docker push ghcr.io/hajekj/php-runtime:8.1.${{github.run_number}}
     - name: Tag the image as latest
-      run: docker tag ghcr.io/hajekj/php-runtime:8.1.${{GITHUB_RUN_NUMBER}} ghcr.io/hajekj/php-runtime:latest
+      run: docker tag ghcr.io/hajekj/php-runtime:8.1.${{github.run_number}} ghcr.io/hajekj/php-runtime:latest
     - name: Push the Docker Image as latest
       run: docker push ghcr.io/hajekj/php-runtime:latest
