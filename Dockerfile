@@ -1,162 +1,94 @@
-FROM php:7.4.0-fpm
-MAINTAINER Jan Hajek <hajek.j@hotmail.com>
+FROM php:8.1-apache
+LABEL maintainer="Jan Hajek <hajek.j@hotmail.com>"
 
-# Copy image files
-COPY apache2.conf /bin/
-COPY rpaf.conf /bin/
+ENV PHP_VERSION 8.1
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+    curl \
+    net-tools \
+    dnsutils \
+    tcpdump \
+    tcptraceroute \
+    iproute2 \
+    nano
+
+COPY tcpping /usr/bin/tcpping
+RUN chmod 755 /usr/bin/tcpping
+
 COPY init_container.sh /bin/
-COPY www.conf /bin/
-COPY supervisord.conf /bin/
+COPY hostingstart.html /home/site/wwwroot/hostingstart.html
 
-RUN apt update \
-    && apt install -y --no-install-recommends\
-        supervisor \ 
-    && mkdir -p /var/log/supervisor \
-    && rm -rf /var/lib/apt/lists/* \
-    && cp /bin/supervisord.conf /etc/supervisor/supervisord.conf
+RUN if [[ "$PHP_VERSION" == "5.6" || "$PHP_VERSION" == "7.0" ]] ; then \
+    apt-get install -y libmcrypt-dev \
+    && docker-php-ext-install mcrypt; \
+    fi
 
-# Configure PHP and required extensions
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-         libfreetype6-dev \
-         libpng-dev \
-         libjpeg-dev \
-         libpq-dev \
-         libmcrypt-dev \
-         libldap2-dev \
-         libldb-dev \
-         libicu-dev \
-         libgmp-dev \
-         libmagickwand-dev \
-	 libzip-dev \
-	 libonig-dev \
-         openssh-server vim curl wget tcptraceroute \
-    && chmod 755 /bin/init_container.sh \
-    && echo "cd /home" >> /etc/bash.bashrc \
-    && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
-    && ln -s /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so \
-    && ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h \
-    && rm -rf /var/lib/apt/lists/* \
-    && pecl install imagick-beta \
-    && pecl install mcrypt-1.0.2 \
-    && docker-php-ext-configure gd \
-         --with-png-dir=/usr \
-	 --with-jpeg-dir=/usr \
-	 --enable-gd-native-ttf \
-         --with-freetype-dir=/usr/include/freetype2 \
-    && docker-php-ext-install gd \
-         mysqli \
-         opcache \
-         pdo \
-         pdo_mysql \
-         pdo_pgsql \
-         pgsql \
-         ldap \
-         intl \
-         gmp \
-         zip \
-         bcmath \
-         mbstring \
-         pcntl \
-    && docker-php-ext-enable imagick \
-    && docker-php-ext-enable mcrypt
+RUN chmod 755 /bin/init_container.sh \
+    && mkdir -p /home/LogFiles/ \
+    && echo "root:Docker!" | chpasswd \
+    && echo "cd /home" >> /root/.bashrc \
+    && ln -s /home/site/wwwroot /var/www/html \
+    && mkdir -p /opt/startup
 
-# Install and configure Apache
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
-		apache2 \
-	&& rm -rf /var/lib/apt/lists/*
+# configure startup
+COPY sshd_config /etc/ssh/
+COPY ssh_setup.sh /tmp
+RUN mkdir -p /opt/startup \
+    && chmod -R +x /opt/startup \
+    && chmod -R +x /tmp/ssh_setup.sh \
+    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null) \
+    && rm -rf /tmp/*
 
-ENV APACHE_CONFDIR /etc/apache2
-ENV APACHE_ENVVARS $APACHE_CONFDIR/envvars
+COPY startssh.sh /opt/startup
+RUN chmod +x /opt/startup/startssh.sh
 
-RUN set -ex \
-	\
-# generically convert lines like
-#   export APACHE_RUN_USER=www-data
-# into
-#   : ${APACHE_RUN_USER:=www-data}
-#   export APACHE_RUN_USER
-# so that they can be overridden at runtime ("-e APACHE_RUN_USER=...")
-	&& sed -ri 's/^export ([^=]+)=(.*)$/: ${\1:=\2}\nexport \1/' "$APACHE_ENVVARS" \
-	\
-# setup directories and permissions
-	&& . "$APACHE_ENVVARS" \
-	&& for dir in \
-		"$APACHE_LOCK_DIR" \
-		"$APACHE_RUN_DIR" \
-		"$APACHE_LOG_DIR" \
-		/var/www/html \
-	; do \
-		rm -rvf "$dir" \
-		&& mkdir -p "$dir" \
-		&& chown -R "$APACHE_RUN_USER:$APACHE_RUN_GROUP" "$dir"; \
-	done
+ENV PORT 80
+ENV SSH_PORT 2222
+EXPOSE 2222 80
+COPY sshd_config /etc/ssh/
 
-# logs should go to stdout / stderr
-RUN set -ex \
-	&& . "$APACHE_ENVVARS" \
-	&& ln -sfT /dev/stderr "$APACHE_LOG_DIR/error.log" \
-	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/access.log" \
-	&& ln -sfT /dev/stdout "$APACHE_LOG_DIR/other_vhosts_access.log"
+ENV WEBSITE_ROLE_INSTANCE_ID localRoleInstance
+ENV WEBSITE_INSTANCE_ID localInstance
+ENV PATH ${PATH}:/home/site/wwwroot
 
-RUN a2enmod rewrite expires include deflate proxy_fcgi headers
-
-# Install RPAF as per https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-16-04-server
-RUN \
-   apt-get update \
-   && apt-get install -y --no-install-recommends \
-        unzip build-essential apache2-dev \
-   && wget https://github.com/gnif/mod_rpaf/archive/stable.zip \
-   && unzip stable.zip \
-   && cd mod_rpaf-stable \
-   && make \
-   && make install \
-   && echo "LoadModule rpaf_module /usr/lib/apache2/modules/mod_rpaf.so" >> /etc/apache2/mods-enabled/rpaf.load \
-   && cp /bin/rpaf.conf /etc/apache2/mods-enabled/rpaf.conf
-
-RUN   \
-   rm -f /var/log/apache2/* \
-   && rmdir /var/lock/apache2 \
-   && rmdir /var/run/apache2 \
-   && rmdir /var/log/apache2 \
-   && chmod 777 /var/log \
-   && chmod 777 /var/run \
-   && chmod 777 /var/lock \
-   && chmod 777 /bin/init_container.sh \
-   && cp /bin/apache2.conf /etc/apache2/apache2.conf \
-   && rm -rf /var/www/html \
-   && rm -rf /var/log/apache2 \
-   && mkdir -p /home/LogFiles \
-   && mkdir -p /run/php \
-   && ln -s /home/site/wwwroot /var/www/html \
-   && ln -s /home/LogFiles /var/log/apache2 \
-   && rm /usr/local/etc/php-fpm.d/www.conf \
-   && cp /bin/www.conf /usr/local/etc/php-fpm.d/www.conf;
+RUN sed -i 's!ErrorLog ${APACHE_LOG_DIR}/error.log!ErrorLog /dev/stderr!g' /etc/apache2/apache2.conf 
+RUN sed -i 's!User ${APACHE_RUN_USER}!User www-data!g' /etc/apache2/apache2.conf 
+RUN sed -i 's!User ${APACHE_RUN_GROUP}!Group www-data!g' /etc/apache2/apache2.conf 
+# Enable access to the /home/site/wwwroot otherwise you get AH01630 error
+RUN sed -i '/<Directory \/var\/www\/>/s/\/var\/www\//\/home\/site\/wwwroot/g' /etc/apache2/apache2.conf
 
 RUN { \
-                echo 'opcache.memory_consumption=64'; \
-                echo 'opcache.interned_strings_buffer=8'; \
-                echo 'opcache.max_accelerated_files=4000'; \
-                echo 'opcache.revalidate_freq=60'; \
-                echo 'opcache.fast_shutdown=1'; \
-                echo 'opcache.enable_cli=1'; \
-    } > /usr/local/etc/php/conf.d/opcache-recommended.ini
+    echo 'DocumentRoot /home/site/wwwroot'; \
+    echo 'DirectoryIndex default.htm default.html index.htm index.html index.php hostingstart.html'; \
+    echo 'CustomLog /dev/null combined'; \
+    echo '<FilesMatch "\.(?i:ph([[p]?[0-9]*|tm[l]?))$">'; \
+    echo '   SetHandler application/x-httpd-php'; \
+    echo '</FilesMatch>'; \
+    echo '<DirectoryMatch "^/.*/\.git/">'; \
+    echo '   Order deny,allow'; \
+    echo '   Deny from all'; \
+    echo '</DirectoryMatch>'; \
+    echo 'EnableMMAP Off'; \
+    echo 'EnableSendfile Off'; \
+    } >> /etc/apache2/apache2.conf
 
-RUN { \
-                echo 'error_log=/var/log/apache2/php-error.log'; \
-                echo 'display_errors=Off'; \
-                echo 'log_errors=On'; \
-                echo 'display_startup_errors=Off'; \
-                echo 'date.timezone=UTC'; \
+RUN rm -f /usr/local/etc/php/conf.d/php.ini \
+    && { \
+    echo 'error_log=/dev/stderr'; \
+    echo 'display_errors=Off'; \
+    echo 'log_errors=On'; \
+    echo 'display_startup_errors=Off'; \
+    echo 'date.timezone=UTC'; \
     } > /usr/local/etc/php/conf.d/php.ini
 
-EXPOSE 8080
-
-ENV PORT 8080
-
 RUN rm -f /etc/apache2/conf-enabled/other-vhosts-access-log.conf
+RUN rm /etc/apache2/sites-enabled/000-default.conf
 
-WORKDIR /var/www/html
+COPY mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
+
+WORKDIR /home/site/wwwroot
+
+COPY /startup.sh /opt/startup/startup.sh
 
 ENTRYPOINT ["/bin/init_container.sh"]
