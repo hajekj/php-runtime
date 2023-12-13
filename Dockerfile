@@ -1,7 +1,9 @@
 FROM php:8.1-apache
 LABEL maintainer="Jan Hajek <hajek.j@hotmail.com>"
-
+SHELL ["/bin/bash", "-c"]
 ENV PHP_VERSION 8.1
+
+RUN a2enmod rewrite expires include deflate remoteip headers
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
@@ -11,7 +13,10 @@ RUN apt-get update \
     tcpdump \
     tcptraceroute \
     iproute2 \
-    nano
+    nano \
+    # For SSH to work
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY tcpping /usr/bin/tcpping
 RUN chmod 755 /usr/bin/tcpping
@@ -20,12 +25,12 @@ COPY init_container.sh /bin/
 COPY hostingstart.html /home/site/wwwroot/hostingstart.html
 
 RUN if [[ "$PHP_VERSION" == "5.6" || "$PHP_VERSION" == "7.0" ]] ; then \
-    apt-get install -y libmcrypt-dev \
+    apt-get install -y libmcrypt-dev && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install mcrypt; \
     fi
 
 RUN chmod 755 /bin/init_container.sh \
-    && mkdir -p /home/LogFiles/ \
+    && mkdir -p /home/LogFiles/ \ 
     && echo "root:Docker!" | chpasswd \
     && echo "cd /home" >> /root/.bashrc \
     && ln -s /home/site/wwwroot /var/www/html \
@@ -57,6 +62,7 @@ ENV PATH ${PATH}:/home/site/wwwroot
 RUN sed -i 's!ErrorLog ${APACHE_LOG_DIR}/error.log!ErrorLog /dev/stderr!g' /etc/apache2/apache2.conf 
 RUN sed -i 's!User ${APACHE_RUN_USER}!User www-data!g' /etc/apache2/apache2.conf 
 RUN sed -i 's!User ${APACHE_RUN_GROUP}!Group www-data!g' /etc/apache2/apache2.conf 
+
 # Enable access to the /home/site/wwwroot otherwise you get AH01630 error
 RUN sed -i '/<Directory \/var\/www\/>/s/\/var\/www\//\/home\/site\/wwwroot/g' /etc/apache2/apache2.conf
 
