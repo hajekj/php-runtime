@@ -16,6 +16,7 @@ RUN apt-get update \
     nano \
     # For SSH to work
     openssh-client \
+    openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 COPY tcpping /usr/bin/tcpping
@@ -78,6 +79,7 @@ RUN { \
     echo '   Deny from all'; \
     echo '</DirectoryMatch>'; \
     echo 'EnableMMAP Off'; \
+    echo 'RemoteIPHeader X-Forwarded-For'; \
     echo 'EnableSendfile Off'; \
     } >> /etc/apache2/apache2.conf
 
