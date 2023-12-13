@@ -51,6 +51,12 @@ sed -i "s/APACHE_MAX_REQ_WORKERS/$APACHE_MAX_REQ_WORKERS/g" /etc/apache2/mods-av
 # starting sshd process
 source /opt/startup/startssh.sh
 
+## CUSTOM
+mkdir -p /home/LogFiles
+mkdir -p /home/site/wwwroot
+mkdir -p /home/data/session
+##
+
 # appPath="/home/site/wwwroot"
 # runFromPath="/tmp/webapp"
 startupCommandPath="/opt/startup/startup.sh"
