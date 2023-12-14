@@ -3,7 +3,7 @@ LABEL maintainer="Jan Hajek <hajek.j@hotmail.com>"
 SHELL ["/bin/bash", "-c"]
 ENV PHP_VERSION 8.1
 
-RUN a2enmod rewrite expires include deflate remoteip headers
+RUN a2enmod rewrite expires include deflate remoteip headers authz_groupfile
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
@@ -184,6 +184,8 @@ RUN sed -i 's!User ${APACHE_RUN_GROUP}!Group www-data!g' /etc/apache2/apache2.co
 RUN sed -i '/<Directory \/var\/www\/>/s/\/var\/www\//\/home\/site\/wwwroot/g' /etc/apache2/apache2.conf
 # Enable using custom .htaccess
 RUN sed -i '/<Directory \/home\/site\/wwwroot>/,/<\/Directory>/s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+# Don't allow directory listing by default
+RUN sed -i '/<Directory \/home\/site\/wwwroot>/,/<\/Directory>/s/Options Indexes FollowSymLinks/Options FollowSymLinks/' /etc/apache2/apache2.conf
 
 # Disable Apache2 server signature - https://github.com/microsoft/Oryx/blob/01392f90eeeb9dbeb9c78c14b0ef443ed274abb6/images/runtime/php/template.base.Dockerfile#L19C1-L21C61
 RUN echo -e 'ServerSignature Off' >> /etc/apache2/apache2.conf
