@@ -182,6 +182,8 @@ RUN sed -i 's!User ${APACHE_RUN_GROUP}!Group www-data!g' /etc/apache2/apache2.co
 
 # Enable access to the /home/site/wwwroot otherwise you get AH01630 error
 RUN sed -i '/<Directory \/var\/www\/>/s/\/var\/www\//\/home\/site\/wwwroot/g' /etc/apache2/apache2.conf
+# Enable using custom .htaccess
+RUN sed -i '/<Directory \/home\/site\/wwwroot>/,/<\/Directory>/s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # Disable Apache2 server signature - https://github.com/microsoft/Oryx/blob/01392f90eeeb9dbeb9c78c14b0ef443ed274abb6/images/runtime/php/template.base.Dockerfile#L19C1-L21C61
 RUN echo -e 'ServerSignature Off' >> /etc/apache2/apache2.conf
